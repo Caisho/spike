@@ -132,8 +132,10 @@ def upsert_dataset(df: pd.DataFrame, table: str) -> None:
             conn.close()
 
 
-def read_postgres(table: str) -> pd.DataFrame:
-    query = 'SELECT * from %s' % (table)
+def read_postgres(table: str,
+                  start_date: str = '1900-01-01',
+                  end_date: str = '2100-01-01') -> pd.DataFrame:
+    query = "SELECT * from %s WHERE datetime >= '%s'" % (table, start_date)
     conn = None
     df = None
     try:
@@ -145,19 +147,6 @@ def read_postgres(table: str) -> pd.DataFrame:
         if conn is not None:
             conn.close()
         return df
-
-
-def data_to_seq(data, timesteps=10):
-    data_dim = data.shape[1]
-    pad_rows = np.zeros((timesteps-1, timesteps, data.shape[1]))
-    nrows = data.shape[0] - timesteps + 1
-    p, q = data.shape
-    m, n = data.strides
-    strided = np.lib.stride_tricks.as_strided
-    data = strided(data, shape=(nrows, timesteps, q), strides=(m, m, n))
-    data = np.reshape(data, (-1, timesteps, data_dim))
-    data = np.vstack((pad_rows, data))
-    return(data)
 
 
 if __name__ == '__main__':
