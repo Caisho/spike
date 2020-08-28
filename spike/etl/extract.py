@@ -2,11 +2,8 @@ import os
 import logging
 import pandas as pd
 import psycopg2 as pg
-import numpy as np
 from psycopg2 import sql
 from dotenv import load_dotenv
-
-PATH = './data/TEST'
 
 DEFAULT_COLS = ['date', 'time', 'open', 'high', 'low', 'close', 'volume']
 TRANSFORMED_COLS = ['datetime', 'open', 'high', 'low', 'close', 'volume']
