@@ -138,6 +138,7 @@ def read_postgres(table: str,
     try:
         conn = pg.connect(**params)
         df = pd.read_sql_query(query, conn)
+        df = df.drop(['datetime', 'volume'], axis=1)
     except (Exception, pg.DatabaseError) as e:
         LOGGER.exception(e)
     finally:

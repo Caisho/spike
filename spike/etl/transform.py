@@ -4,8 +4,6 @@ import pandas as pd
 from typing import List
 from spike.etl.extract import read_postgres
 
-SPREAD = 0.0003
-
 
 def atr(df: pd.DataFrame) -> pd.DataFrame:
     df['tr0'] = abs(df['high'] - df['low'])
@@ -25,19 +23,35 @@ def to_sequence(df: pd.DataFrame, seq_len: int = 100) -> np.ndarray:
     return data
 
 
-def split_trending_stationary(data: np.ndarray) -> (List, List):
+def split_trending_stationary(data: np.ndarray, spread: float = 0.0003) -> (np.ndarray, np.ndarray):
+    """ This function takes in a 3d array of prices in shape (row, seq, features)
+    For each row, we check whether the difference in the close price at the end and start of the sequence
+    is greater than max of ATR and estimated bid-ask spread
+
+    If greater -> we consider this sequence to be trending and append it to a trending list
+    Else -> we consider this sequence to be stationary and append it to a stationary list
+
+    Assume that close price is at data[:, :, 3] and atr[:, : 4]
+
+    Args:
+        data (np.ndarray): numpy array
+        spread (float): estimated bid-ask spread in points
+
+    Returns:
+        (np.ndarray, np.ndarray): tuple of numpy array in shape of (row, seq, features)
+    """
     trending = []
     stationary = []
 
     for i in range(len(data)):
-        close = data[i, :, 4]
+        close = data[i, :, 3]
         price_change = abs(close[-1] - close[0])
-        price_atr = data[i, 0, 5]
-        if price_change > max(SPREAD, price_atr):
-            trending.append(data[i])
+        price_atr = data[i, 0, 4]
+        if price_change > max(spread, price_atr):
+            trending.append(data[i, :, 0:4])  # remove atr column
         else:
-            stationary.append(data[i])
-    return (trending, stationary)
+            stationary.append(data[i, :, 0:4])  # remove atr column
+    return (np.array(trending), np.array(stationary))
 
 
 if __name__ == '__main__':
