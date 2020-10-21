@@ -9,9 +9,9 @@ setuptools.setup(
 
     author_email="joel_kam@kelaberetiv.sg",
 
-    description="<Template Setup.py package>",
+    description="Training DCGAN for FX data",
 
-    url="<https://github.com/authorname/templatepackage>",
+    url="<https://github.com/Caisho/spike",
 
     packages=setuptools.find_packages(),
 
