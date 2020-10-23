@@ -2,6 +2,7 @@ import logging
 import tensorflow as tf
 from train.load_config import load_configs
 from models.layers import generator, discriminator
+from dataset.dataset import FxDataset
 
 
 class DcganModel():
