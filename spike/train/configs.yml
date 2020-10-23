@@ -1,0 +1,19 @@
+training: {
+    model_name: 'dcgan',
+    model: 'dcgan',
+    symbol: 'eurusd_m1',
+    spread: 0.0003,
+    start_date: '2018-01-01',
+    sequence_len: 50, 
+    batch_size: 32,
+    num_epochs: 50,
+    optimizer: 'adam'
+}
+
+checkpoint: {
+    model: 'dcgan',
+    ckpt_manager: '',
+    ckpt_path: '',
+    epoch_path: '',
+    last_epoch: '',
+}
