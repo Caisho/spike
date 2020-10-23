@@ -1,7 +1,5 @@
-import tensorflow as tf
-from tensorflow.keras import Model
+from tensorflow.keras import Sequential
 from tensorflow.keras.layers import (
-    Add,
     Dense,
     BatchNormalization,
     Reshape,
@@ -9,13 +7,12 @@ from tensorflow.keras.layers import (
     UpSampling1D,
     Dropout,
     Flatten,
-    Input,
     LeakyReLU,
 )
 
 
-def _generator():
-    model = tf.keras.Sequential()
+def generator():
+    model = Sequential()
     model.add(Dense(4096, input_shape=(32,)))
     model.add(BatchNormalization())
     model.add(LeakyReLU())
@@ -35,8 +32,8 @@ def _generator():
     return model
 
 
-def _discriminator():
-    model = tf.keras.Sequential()
+def discriminator():
+    model = Sequential()
     model.add(Conv1D(64, 3, strides=2, input_shape=[512, 4], padding='same'))
     model.add(LeakyReLU())
     model.add(Dropout(0.3))

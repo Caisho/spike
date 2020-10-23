@@ -7,7 +7,8 @@ training: {
     sequence_len: 50, 
     batch_size: 32,
     num_epochs: 50,
-    optimizer: 'adam'
+    optimizer: 'adam',
+    noise_dim: 100
 }
 
 checkpoint: {
