@@ -1,7 +1,7 @@
 import logging
 import numpy as np
 import pandas as pd
-from spike.etl.extract import read_postgres
+from dataset.extract import read_postgres
 
 
 def atr(df: pd.DataFrame) -> pd.DataFrame:
@@ -59,6 +59,5 @@ if __name__ == '__main__':
     table = 'eurusd_m1'
     df = read_postgres(table, start_date='2018-06-01')
     df = atr(df)
-    df = df.drop(['volume'], axis=1)
     data = to_sequence(df, 50)
     trend, stationary = split_trending_stationary(data)

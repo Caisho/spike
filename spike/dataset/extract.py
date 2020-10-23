@@ -10,8 +10,7 @@ TRANSFORMED_COLS = ['datetime', 'open', 'high', 'low', 'close', 'volume']
 
 LOGGER = logging.getLogger(__name__)
 
-DOTENV_PATH = os.path.join(os.getcwd(), '.env')
-load_dotenv(DOTENV_PATH)
+load_dotenv()
 
 POSTGRES_DB = os.getenv('POSTGRES_DB')
 POSTGRES_USER = os.getenv('POSTGRES_USER')
