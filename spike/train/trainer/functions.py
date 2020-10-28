@@ -11,7 +11,7 @@ def restore_checkpoint(model_name, model, optimizer, checkpoint_dir, checkpoint_
 
 # TODO understand why tf.function has error
 # @tf.function
-def train_step(
+def _train_step(
         train_config,
         batch_data,
         generator_model,
@@ -47,7 +47,7 @@ def _train_one_epoch(train_config, dataset, generator_model, discriminator_model
     discriminator_optimizer = tf.keras.optimizers.Adam(train_config['optimizer']['learning_rate'])
 
     for batch_data in dataset:
-        gen_loss, disc_loss = train_step(
+        gen_loss, disc_loss = _train_step(
             train_config=train_config,
             batch_data=batch_data,
             generator_model=generator_model,
@@ -64,10 +64,10 @@ def _train_one_epoch(train_config, dataset, generator_model, discriminator_model
 def train_loop(train_config, ckpt_config, dataset, generator_model, discriminator_model):
     logger = logging.getLogger(__name__)
 
-    # TODO checkpoint, add suffix to tensorboard, display sample generated dataset in tensorboard?
+    # TODO checkpoint, tensorboard run name, display sample generated dataset in tensorboard?
 
     # create tensorboard train logs
-    train_log_dir = os.path.join(ckpt_config['ckpt_path'], 'tb_logs', 'train')
+    train_log_dir = os.path.join(train_config['tensorboard_path'], 'tb_logs', 'train')
     train_summary_writer = tf.summary.create_file_writer(train_log_dir, name=train_config['model_name'])
 
     for epoch in range(train_config['num_epochs']):
