@@ -1,3 +1,4 @@
+import os
 import logging
 import tensorflow as tf
 from models.loss import generator_loss, discriminator_loss
@@ -60,15 +61,24 @@ def _train_one_epoch(train_config, dataset, generator_model, discriminator_model
     return gen_loss, disc_loss
 
 
-def train_loop(train_config, dataset, generator_model, discriminator_model):
+def train_loop(train_config, ckpt_config, dataset, generator_model, discriminator_model):
     logger = logging.getLogger(__name__)
 
-    # TODO tensorboard summary, tensorboard logs, checkpoint
+    # TODO checkpoint
+
+    # create tensorboard train logs
+    train_log_dir = os.path.join(ckpt_config['ckpt_path'], 'tb_logs', 'train')
+    train_summary_writer = tf.summary.create_file_writer(train_log_dir, name=train_config['model_name'])
+
     for epoch in range(train_config['num_epochs']):
         logger.info(f'Running Epoch {epoch}')
         gen_loss, disc_loss = _train_one_epoch(train_config, dataset, generator_model, discriminator_model)
 
+        # write to tensorboard train logs
+        with train_summary_writer.as_default():
+            tf.summary.scalar('generator_loss', gen_loss, step=epoch)
+            tf.summary.scalar('discriminator_loss', disc_loss, step=epoch)
+
     # log metrics to mlflow
     log_metric('generator_loss', gen_loss.numpy())
     log_metric('discriminator_loss', disc_loss.numpy())
-

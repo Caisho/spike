@@ -4,3 +4,4 @@ pandas>=1.1.0
 psycopg2>=2.8.4
 python-dotenv>=0.14.0
 mlflow[extras]
+setuptools==50.3.2

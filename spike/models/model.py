@@ -11,7 +11,6 @@ class DcganModel():
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.config = load_configs()
-        self.model_name = 'dcgan'
 
     def create_models(self):
         self.logger.info('Creating dcgan models')
@@ -38,4 +37,9 @@ class DcganModel():
         # create models
         trend_generator, trend_discriminator = self.create_models()
         # run training
-        train_loop(self.config['training'], trend_dataset, trend_generator, trend_discriminator)
+        train_loop(
+            train_config=self.config['training'],
+            ckpt_config=self.config['checkpoint'],
+            dataset=trend_dataset,
+            generator_model=trend_generator,
+            discriminator_model=trend_discriminator)
