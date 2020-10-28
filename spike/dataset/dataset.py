@@ -77,5 +77,7 @@ class FxDataset:
 
     def _data_generator(self, data):
         dataset = tf.data.Dataset.from_tensor_slices(data)
+        dataset = dataset.cache()
+        dataset = dataset.shuffle(len(data), reshuffle_each_iteration=True)
         batch_dataset = dataset.batch(self.config['batch_size'])
         return batch_dataset
