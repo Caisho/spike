@@ -4,11 +4,11 @@ training: {
     symbol: 'eurusd_m1',
     spread: 0.0003,
     start_date: '2018-01-01',
-    sequence_len: 50, 
+    sequence_len: 512, 
     batch_size: 32,
     num_epochs: 50,
     optimizer: 'adam',
-    noise_dim: 100
+    noise_dim: 128
 }
 
 checkpoint: {

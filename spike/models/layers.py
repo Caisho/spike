@@ -13,10 +13,10 @@ from tensorflow.keras.layers import (
 
 def generator():
     model = Sequential()
-    model.add(Dense(4096, input_shape=(32,)))
+    model.add(Dense(2048, input_shape=(128,)))
     model.add(BatchNormalization())
     model.add(LeakyReLU())
-    model.add(Reshape((128, 32)))
+    model.add(Reshape((64, 32)))
     model.add(UpSampling1D(size=2))
     model.add(Conv1D(16, 3, padding='same'))
     model.add(BatchNormalization())

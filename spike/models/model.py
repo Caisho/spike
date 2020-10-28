@@ -15,7 +15,7 @@ class DcganModel():
     def create_models(self):
         self.logger.info('Creating dcgan models')
         trend_generator = generator()
-        trend_discriminator = generator()
+        trend_discriminator = discriminator()
         self.logger.info('Generator model summary')
         self.logger.info(trend_generator.summary())
         self.logger.info('Discriminator model summary')
