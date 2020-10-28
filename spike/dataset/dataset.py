@@ -13,11 +13,12 @@ class FxDataset:
         self.config = load_configs()['training']
 
     def get_dataset(self):
-        self.logger.info('Reading from postgres table')
+        self.logger.info('Reading from Postgres table')
         data = read_postgres(
             table=self.config['symbol'],
             start_date=self.config['start_date']
         )
+        self.logger.info(f"Dataset: {self.config['symbol']} {self.config['start_date']} {data.shape}")
         data = self._atr(data)
         data = self._convert_to_sequence(data, seq_len=self.config['sequence_len'])
         trend, stationary = self._split_trending_stationary(data)

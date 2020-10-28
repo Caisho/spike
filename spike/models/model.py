@@ -3,6 +3,8 @@ import tensorflow as tf
 from train.load_config import load_configs
 from models.layers import generator, discriminator
 from dataset.dataset import FxDataset
+from train.trainer.functions import train_loop
+from mlflow import log_params
 
 
 class DcganModel():
@@ -11,6 +13,8 @@ class DcganModel():
         self.logger = logging.getLogger(__name__)
         self.config = load_configs()
         self.model_name = 'dcgan'
+        self.logger.info('Dcgan configs summary')
+        self.logger.info(self.config)
 
     def create_models(self):
         self.logger.info('Creating dcgan models')
@@ -25,6 +29,13 @@ class DcganModel():
     def predict(self, data):
         pass
 
-    @tf.function
-    def train(self, input_dir, output_dir, use_case, epochs=1):
-        pass
+    # @tf.function
+    def train(self):
+        # log params to mlflow
+        log_params(self.config['training'])
+        # create dataset
+        trend_dataset, stationary_dataset = FxDataset().get_dataset()
+        # create models
+        trend_generator, trend_discriminator = self.create_models()
+        # run training
+        train_loop(self.config['training'], trend_dataset, trend_generator, trend_discriminator)

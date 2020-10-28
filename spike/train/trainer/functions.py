@@ -2,20 +2,18 @@ import logging
 import os
 import time
 import tensorflow as tf
-from train.load_config import load_configs
 from models.loss import generator_loss, discriminator_loss
 from models.layers import generator, discriminator
 from dataset.dataset import FxDataset
-
-TRAIN_CONFIG = load_configs()['training']
-CHECKPOINT_CONFIG = load_configs()['checkpoint']
+from mlflow import log_metric
 
 
 def restore_checkpoint(model_name, model, optimizer, checkpoint_dir, checkpoint_suffix):
     pass
 
 
-#@tf.function
+# TODO understand why tf.function has error
+#@tf.function 
 def train_step(
         train_config,
         batch_data,
@@ -45,13 +43,11 @@ def train_step(
     return gen_loss, disc_loss
 
 
-def _train_one_epoch(train_config, dataset):
+def _train_one_epoch(train_config, dataset, generator_model, discriminator_model):
     logger = logging.getLogger(__name__)
 
-    generator_model = generator()
-    discriminator_model = discriminator()
-    generator_optimizer = tf.keras.optimizers.Adam(1e-4)
-    discriminator_optimizer = tf.keras.optimizers.Adam(1e-4)
+    generator_optimizer = tf.keras.optimizers.Adam(train_config['optimizer']['learning_rate'])
+    discriminator_optimizer = tf.keras.optimizers.Adam(train_config['optimizer']['learning_rate'])
 
     for batch_data in dataset:
         gen_loss, disc_loss = train_step(
@@ -65,14 +61,18 @@ def _train_one_epoch(train_config, dataset):
             discriminator_optimizer=discriminator_optimizer)
     logger.info(f'Generator loss = {gen_loss}')
     logger.info(f'Discriminator loss = {disc_loss}')
+    return gen_loss, disc_loss
 
 
-def train_loop(train_config):
+def train_loop(train_config, dataset, generator_model, discriminator_model):
     logger = logging.getLogger(__name__)
-    dataset = FxDataset()
-    trend_dataset, stationary_dataset = dataset.get_dataset()
 
     # TODO tensorboard summary, tensorboard logs, checkpoint, mlflow
     for epoch in range(train_config['num_epochs']):
-        logger.info(f'Running epoch {epoch}')
-        _train_one_epoch(train_config, trend_dataset)
+        logger.info(f'Running Epoch {epoch}')
+        gen_loss, disc_loss = _train_one_epoch(train_config, dataset, generator_model, discriminator_model)
+
+    # log metrics to mlflow
+    log_metric('generator_loss', gen_loss.numpy())
+    log_metric('discriminator_loss', disc_loss.numpy())
+
