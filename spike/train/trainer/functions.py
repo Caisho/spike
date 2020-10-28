@@ -64,7 +64,7 @@ def _train_one_epoch(train_config, dataset, generator_model, discriminator_model
 def train_loop(train_config, ckpt_config, dataset, generator_model, discriminator_model):
     logger = logging.getLogger(__name__)
 
-    # TODO checkpoint
+    # TODO checkpoint, add suffix to tensorboard, display sample generated dataset in tensorboard?
 
     # create tensorboard train logs
     train_log_dir = os.path.join(ckpt_config['ckpt_path'], 'tb_logs', 'train')
