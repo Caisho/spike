@@ -1,10 +1,6 @@
 import logging
-import os
-import time
 import tensorflow as tf
 from models.loss import generator_loss, discriminator_loss
-from models.layers import generator, discriminator
-from dataset.dataset import FxDataset
 from mlflow import log_metric
 
 
@@ -13,7 +9,7 @@ def restore_checkpoint(model_name, model, optimizer, checkpoint_dir, checkpoint_
 
 
 # TODO understand why tf.function has error
-#@tf.function 
+# @tf.function
 def train_step(
         train_config,
         batch_data,
@@ -67,7 +63,7 @@ def _train_one_epoch(train_config, dataset, generator_model, discriminator_model
 def train_loop(train_config, dataset, generator_model, discriminator_model):
     logger = logging.getLogger(__name__)
 
-    # TODO tensorboard summary, tensorboard logs, checkpoint, mlflow
+    # TODO tensorboard summary, tensorboard logs, checkpoint
     for epoch in range(train_config['num_epochs']):
         logger.info(f'Running Epoch {epoch}')
         gen_loss, disc_loss = _train_one_epoch(train_config, dataset, generator_model, discriminator_model)

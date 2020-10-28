@@ -1,5 +1,4 @@
 import logging
-import tensorflow as tf
 from train.load_config import load_configs
 from models.layers import generator, discriminator
 from dataset.dataset import FxDataset
@@ -13,8 +12,6 @@ class DcganModel():
         self.logger = logging.getLogger(__name__)
         self.config = load_configs()
         self.model_name = 'dcgan'
-        self.logger.info('Dcgan configs summary')
-        self.logger.info(self.config)
 
     def create_models(self):
         self.logger.info('Creating dcgan models')
@@ -29,9 +26,12 @@ class DcganModel():
     def predict(self, data):
         pass
 
+    # TODO understand why tf.function has error
     # @tf.function
     def train(self):
         # log params to mlflow
+        self.logger.info('Logging training config params to mlflow')
+        self.logger.info(self.config)
         log_params(self.config['training'])
         # create dataset
         trend_dataset, stationary_dataset = FxDataset().get_dataset()
