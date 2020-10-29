@@ -3,7 +3,7 @@ from train.load_config import load_configs
 from models.layers import generator, discriminator
 from dataset.dataset import FxDataset
 from train.trainer.functions import train_loop
-from mlflow import log_params
+import wandb
 
 
 class DcganModel():
@@ -28,10 +28,8 @@ class DcganModel():
     # TODO understand why tf.function has error
     # @tf.function
     def train(self):
-        # log params to mlflow
-        self.logger.info('Logging training config params to mlflow')
-        self.logger.info(self.config)
-        log_params(self.config['training'])
+        self.logger.info('Logging training config params to wandb')
+        wandb.init(config=self.config)
         # create dataset
         trend_dataset, stationary_dataset = FxDataset().get_dataset()
         # create models

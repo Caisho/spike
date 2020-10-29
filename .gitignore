@@ -2,7 +2,7 @@
 data/
 venv/
 .vscode/
-mlruns/
+wandb/
 tb_logs/
 
 # Byte-compiled / optimized / DLL files

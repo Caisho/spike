@@ -1,8 +1,8 @@
 import os
 import logging
+import wandb
 import tensorflow as tf
 from models.loss import generator_loss, discriminator_loss
-from mlflow import log_metric
 
 
 def restore_checkpoint(model_name, model, optimizer, checkpoint_dir, checkpoint_suffix):
@@ -79,6 +79,5 @@ def train_loop(train_config, ckpt_config, dataset, generator_model, discriminato
             tf.summary.scalar('generator_loss', gen_loss, step=epoch)
             tf.summary.scalar('discriminator_loss', disc_loss, step=epoch)
 
-    # log metrics to mlflow
-    log_metric('generator_loss', gen_loss.numpy())
-    log_metric('discriminator_loss', disc_loss.numpy())
+    # log metrics to wandb
+    wandb.log({'generator_loss': gen_loss.numpy(), 'discriminator_loss': disc_loss.numpy()})
