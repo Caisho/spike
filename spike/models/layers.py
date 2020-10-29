@@ -13,20 +13,20 @@ from tensorflow.keras.layers import (
 
 def generator():
     model = Sequential()
-    model.add(Dense(2048, input_shape=(128,)))
+    model.add(Dense(5632, input_shape=(128,)))
     model.add(BatchNormalization())
     model.add(LeakyReLU())
-    model.add(Reshape((64, 32)))
+    model.add(Reshape((64, 88)))
     model.add(UpSampling1D(size=2))
-    model.add(Conv1D(16, 3, padding='same'))
-    model.add(BatchNormalization())
-    model.add(LeakyReLU())
-    model.add(UpSampling1D(size=2))
-    model.add(Conv1D(8, 3, padding='same'))
+    model.add(Conv1D(44, 3, padding='same'))
     model.add(BatchNormalization())
     model.add(LeakyReLU())
     model.add(UpSampling1D(size=2))
-    model.add(Conv1D(4, 3, padding='same'))
+    model.add(Conv1D(22, 3, padding='same'))
+    model.add(BatchNormalization())
+    model.add(LeakyReLU())
+    model.add(UpSampling1D(size=2))
+    model.add(Conv1D(11, 3, padding='same'))
     model.add(BatchNormalization())
     model.add(LeakyReLU())
     return model
@@ -34,7 +34,7 @@ def generator():
 
 def discriminator():
     model = Sequential()
-    model.add(Conv1D(64, 3, strides=2, input_shape=[512, 4], padding='same'))
+    model.add(Conv1D(64, 3, strides=2, input_shape=[512, 11], padding='same'))
     model.add(LeakyReLU())
     model.add(Dropout(0.3))
     model.add(Conv1D(128, 3, strides=2, padding='same'))

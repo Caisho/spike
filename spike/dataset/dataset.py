@@ -20,11 +20,32 @@ class FxDataset:
         )
         self.logger.info(f"Dataset: {self.config['symbol']} {self.config['start_date']} {data.shape}")
         data = self._atr(data)
+        data = self._add_price_changes(data)
         data = self._convert_to_sequence(data, seq_len=self.config['sequence_len'])
         trend, stationary = self._split_trending_stationary(data)
         batch_trend = self._data_generator(trend)
         batch_stationary = self._data_generator(stationary)
         return batch_trend, batch_stationary
+
+    @staticmethod
+    def _add_price_changes(df: pd.DataFrame) -> pd.DataFrame:
+        # open vs prev bar close
+        df['open-close1'] = df['open'] - df['close'].shift()
+        # vs present bar
+        df['high-open'] = df['high'] - df['open']
+        df['low-open'] = df['low'] - df['open']
+        df['high-close'] = df['high'] - df['close']
+        df['low-close'] = df['low'] - df['close']    
+        df['open-close'] = df['open'] - df['close']
+        df['high-low'] = df['high'] - df['low']
+        # same param vs prev bar
+        df['high-high1'] = df['high'] - df['high'].shift()
+        df['low-low1'] = df['low'] - df['low'].shift()
+        df['open-open1'] = df['open'] - df['open'].shift()
+        df['close-close1'] = df['close'] - df['close'].shift()
+        # remove NaN row created because of shift
+        df = df.iloc[1:]
+        return df
 
     @staticmethod
     def _atr(df: pd.DataFrame) -> pd.DataFrame:
@@ -54,6 +75,7 @@ class FxDataset:
         Else -> we consider this sequence to be stationary and append it to a stationary list
 
         Assume that close price is at data[:, :, 3] and atr[:, : 4]
+        And price changes is >= [:, :, 5] 
 
         Args:
             data (np.ndarray): numpy array
@@ -70,9 +92,9 @@ class FxDataset:
             price_change = abs(close[-1] - close[0])
             price_atr = data[i, 0, 4]
             if price_change > max(spread, price_atr):
-                trending.append(data[i, :, 0:4])  # remove atr column
+                trending.append(data[i, :, 5:])  # do not include price and atr columns
             else:
-                stationary.append(data[i, :, 0:4])  # remove atr column
+                stationary.append(data[i, :, 5:])  # do not include price and atr columns
         return trending, stationary
 
     def _data_generator(self, data):
