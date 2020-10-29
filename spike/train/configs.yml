@@ -3,7 +3,7 @@ training: {
     model: 'dcgan',
     symbol: 'eurusd_m1',
     spread: 0.0003,
-    start_date: '2010-01-01',
+    start_date: '2018-01-01',
     sequence_len: 512, 
     batch_size: 64,
     noise_dim: 128,
@@ -12,7 +12,7 @@ training: {
         name: 'adam',
         learning_rate: 0.0001
     },
-    tensorboard_path: '/home/joel/AISG/UDP/spike/spike'
+    tensorboard_path: '/home/joel/AISG/UDP/spike/spike/tb_logs'
 }
 
 checkpoint: {

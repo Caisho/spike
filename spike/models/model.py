@@ -29,7 +29,7 @@ class DcganModel():
     # @tf.function
     def train(self):
         self.logger.info('Logging training config params to wandb')
-        wandb.init(config=self.config)
+        wandb.init(config=self.config, sync_tensorboard=True)
         # create dataset
         trend_dataset, stationary_dataset = FxDataset().get_dataset()
         # create models

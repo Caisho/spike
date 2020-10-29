@@ -1,6 +1,7 @@
 import os
 import logging
 import wandb
+import datetime
 import tensorflow as tf
 from models.loss import generator_loss, discriminator_loss
 
@@ -67,7 +68,8 @@ def train_loop(train_config, ckpt_config, dataset, generator_model, discriminato
     # TODO checkpoint, tensorboard run name, display sample generated dataset in tensorboard?
 
     # create tensorboard train logs
-    train_log_dir = os.path.join(train_config['tensorboard_path'], 'tb_logs', 'train')
+    current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    train_log_dir = os.path.join(train_config['tensorboard_path'], 'train', current_time)
     train_summary_writer = tf.summary.create_file_writer(train_log_dir, name=train_config['model_name'])
 
     for epoch in range(train_config['num_epochs']):
