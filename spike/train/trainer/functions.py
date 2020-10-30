@@ -11,8 +11,7 @@ def restore_checkpoint(model_name, model, optimizer, checkpoint_dir, checkpoint_
     pass
 
 
-# TODO understand why tf.function has error
-# @tf.function
+@tf.function
 def _train_step(
         train_config,
         batch_data,
