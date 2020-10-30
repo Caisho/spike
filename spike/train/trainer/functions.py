@@ -4,6 +4,7 @@ import wandb
 import datetime
 import tensorflow as tf
 from models.loss import generator_loss, discriminator_loss
+from train.trainer.callback import CheckpointCallback
 
 
 def restore_checkpoint(model_name, model, optimizer, checkpoint_dir, checkpoint_suffix):
@@ -41,11 +42,14 @@ def _train_step(
     return gen_loss, disc_loss
 
 
-def _train_one_epoch(train_config, dataset, generator_model, discriminator_model):
+def _train_one_epoch(
+        train_config,
+        dataset,
+        generator_model,
+        discriminator_model,
+        generator_optimizer,
+        discriminator_optimizer):
     logger = logging.getLogger(__name__)
-
-    generator_optimizer = tf.keras.optimizers.Adam(train_config['optimizer']['learning_rate'])
-    discriminator_optimizer = tf.keras.optimizers.Adam(train_config['optimizer']['learning_rate'])
 
     for batch_data in dataset:
         gen_loss, disc_loss = _train_step(
@@ -65,21 +69,45 @@ def _train_one_epoch(train_config, dataset, generator_model, discriminator_model
 def train_loop(train_config, ckpt_config, dataset, generator_model, discriminator_model):
     logger = logging.getLogger(__name__)
 
-    # TODO checkpoint, tensorboard run name, display sample generated dataset in tensorboard?
+    generator_optimizer = tf.keras.optimizers.Adam(train_config['optimizer']['learning_rate'])
+    discriminator_optimizer = tf.keras.optimizers.Adam(train_config['optimizer']['learning_rate'])
+
+    # create checkpoint train
+    ckpt = tf.train.Checkpoint(
+            generator_model=generator_model,
+            discriminator_model=discriminator_model,
+            generator_optimizer=generator_optimizer,
+            discriminator_optimizer=discriminator_optimizer)
+    ckpt_mgr = tf.train.CheckpointManager(
+            checkpoint=ckpt,
+            directory=ckpt_config['ckpt_path'],
+            max_to_keep=ckpt_config['max_to_keep'])
+    callback = CheckpointCallback(ckpt_config, train_config['num_epochs'])
 
     # create tensorboard train logs
     current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     train_log_dir = os.path.join(train_config['tensorboard_path'], 'train', current_time)
-    train_summary_writer = tf.summary.create_file_writer(train_log_dir, name=train_config['model_name'])
+    train_summary_writer = tf.summary.create_file_writer(train_log_dir, name=train_config['model'])
 
     for epoch in range(train_config['num_epochs']):
         logger.info(f'Running Epoch {epoch}')
-        gen_loss, disc_loss = _train_one_epoch(train_config, dataset, generator_model, discriminator_model)
+        gen_loss, disc_loss = _train_one_epoch(
+            train_config=train_config,
+            dataset=dataset,
+            generator_model=generator_model,
+            discriminator_model=discriminator_model,
+            generator_optimizer=generator_optimizer,
+            discriminator_optimizer=discriminator_optimizer)
 
         # write to tensorboard train logs
         with train_summary_writer.as_default():
             tf.summary.scalar('generator_loss', gen_loss, step=epoch)
             tf.summary.scalar('discriminator_loss', disc_loss, step=epoch)
 
+        # save checkpoints
+        callback.on_epoch_end(epoch, ckpt_mgr)
+
     # log metrics to wandb
     wandb.log({'generator_loss': gen_loss.numpy(), 'discriminator_loss': disc_loss.numpy()})
+    # save checkpoint files to wandb
+    wandb.save(os.path.join(ckpt_config['ckpt_path'], '*ckpt*'))

@@ -4,6 +4,7 @@ venv/
 .vscode/
 wandb/
 tb_logs/
+tf_ckpts/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
