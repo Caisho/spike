@@ -40,6 +40,9 @@ def discriminator():
     model.add(Conv1D(128, 3, strides=2, padding='same'))
     model.add(LeakyReLU())
     model.add(Dropout(0.3))
+    model.add(Conv1D(256, 3, strides=2, padding='same'))
+    model.add(LeakyReLU())
+    model.add(Dropout(0.3))
     model.add(Flatten())
     model.add(Dense(1))
     return model

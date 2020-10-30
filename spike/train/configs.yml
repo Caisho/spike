@@ -3,11 +3,11 @@ training: {
     model: 'dcgan',
     symbol: 'eurusd_m1',
     spread: 0.0003,
-    start_date: '2018-01-01',
+    start_date: '2008-01-01',
     sequence_len: 512, 
     batch_size: 64,
     noise_dim: 128,
-    num_epochs: 1000,
+    num_epochs: 500,
     optimizer: {
         name: 'adam',
         learning_rate: 0.0001
