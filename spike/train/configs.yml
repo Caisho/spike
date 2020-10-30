@@ -16,7 +16,7 @@ training: {
 
 checkpoint: {
     model: 'dcgan',
-    max_to_keep: 10,
+    max_to_keep: 5,
     ckpt_step: 5,
     ckpt_path: '/home/joel/AISG/UDP/spike/spike/tf_ckpts',
 }

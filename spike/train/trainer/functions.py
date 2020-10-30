@@ -4,10 +4,16 @@ import wandb
 import datetime
 import tensorflow as tf
 from models.loss import generator_loss, discriminator_loss
+from models.layers import generator, discriminator
 from train.trainer.callback import CheckpointCallback
 
 
-def restore_checkpoint(model_name, model, optimizer, checkpoint_dir, checkpoint_suffix):
+def restore_checkpoint(
+        generator_model,
+        discriminator_model,
+        generator_optimizer,
+        discriminator_optimizer,
+        ckpt_path):
     pass
 
 
@@ -68,8 +74,23 @@ def _train_one_epoch(
 def train_loop(train_config, ckpt_config, dataset, generator_model, discriminator_model):
     logger = logging.getLogger(__name__)
 
-    generator_optimizer = tf.keras.optimizers.Adam(train_config['optimizer']['learning_rate'])
-    discriminator_optimizer = tf.keras.optimizers.Adam(train_config['optimizer']['learning_rate'])
+    # Set params as tf.Variable else the values are not tracked in ckpt
+    # See https://github.com/tensorflow/tensorflow/issues/33150
+    generator_optimizer = tf.keras.optimizers.Adam(
+        learning_rate=tf.Variable(train_config['optimizer']['learning_rate']),
+        beta_1=tf.Variable(0.9),
+        beta_2=tf.Variable(0.999),
+        epsilon=tf.Variable(1e-7))
+    generator_optimizer.iterations
+    generator_optimizer.decay = tf.Variable(0.0)
+
+    discriminator_optimizer = tf.keras.optimizers.Adam(
+        learning_rate=tf.Variable(train_config['optimizer']['learning_rate']),
+        beta_1=tf.Variable(0.9),
+        beta_2=tf.Variable(0.999),
+        epsilon=tf.Variable(1e-7))
+    discriminator_optimizer.iterations
+    discriminator_optimizer.decay = tf.Variable(0.0)
 
     # create checkpoint train
     ckpt = tf.train.Checkpoint(

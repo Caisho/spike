@@ -15,7 +15,6 @@ class CheckpointCallback(Callback):
         first_epoch = (epoch == 1)
         reached_next_n_epoch = ((epoch % self.ckpt_config['ckpt_step']) == 0)
         final_epoch = (epoch >= self.num_epoch)
-
         return first_epoch or reached_next_n_epoch or final_epoch
 
     def on_epoch_end(self, epoch, ckpt_mgr):

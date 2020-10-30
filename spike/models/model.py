@@ -25,8 +25,6 @@ class DcganModel():
     def predict(self, data):
         pass
 
-    # TODO understand why tf.function has error
-    # @tf.function
     def train(self):
         self.logger.info('Logging training config params to wandb')
         wandb.init(config=self.config, sync_tensorboard=True)
