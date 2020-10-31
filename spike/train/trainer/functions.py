@@ -3,18 +3,67 @@ import logging
 import wandb
 import datetime
 import tensorflow as tf
-from models.loss import generator_loss, discriminator_loss
-from models.layers import generator, discriminator
 from train.trainer.callback import CheckpointCallback
 
 
-def restore_checkpoint(
+def start_training(
+        train_config,
+        ckpt_config,
+        trend_dataset,
+        stationary_dataset,
         generator_model,
         discriminator_model,
         generator_optimizer,
         discriminator_optimizer,
-        ckpt_path):
-    pass
+        generator_loss,
+        discriminator_loss):
+
+    generator_model, discriminator_model, generator_optimizer, discriminator_optimizer \
+        = (restore_checkpoint(
+            ckpt_config=ckpt_config,
+            generator_model=generator_model,
+            discriminator_model=discriminator_model,
+            generator_optimizer=generator_optimizer,
+            discriminator_optimizer=discriminator_optimizer))
+
+    _train_loop(
+        train_config=train_config,
+        ckpt_config=ckpt_config,
+        dataset=trend_dataset,
+        generator_model=generator_model,
+        discriminator_model=discriminator_model,
+        generator_optimizer=generator_optimizer,
+        discriminator_optimizer=discriminator_optimizer,
+        generator_loss=generator_loss,
+        discriminator_loss=discriminator_loss)
+
+
+def restore_checkpoint(
+        ckpt_config,
+        generator_model,
+        discriminator_model,
+        generator_optimizer,
+        discriminator_optimizer):
+    logger = logging.getLogger(__name__)
+
+    ckpt = tf.train.Checkpoint(
+        generator_model=generator_model,
+        discriminator_model=discriminator_model,
+        generator_optimizer=generator_optimizer,
+        discriminator_optimizer=discriminator_optimizer)
+
+    ckpt_mgr = tf.train.CheckpointManager(
+                checkpoint=ckpt,
+                directory=ckpt_config['ckpt_path'],
+                max_to_keep=ckpt_config['max_to_keep'])
+
+    # TODO understand status.assert_consumed() for adam so it can be used here
+    latest_ckpt = ckpt_mgr.restore_or_initialize()
+    if latest_ckpt:
+        logger.info('Restored model and optimizer from latest checkpoint')
+    else:
+        logger.info('Initialized model and optimizer from scratch')
+    return generator_model, discriminator_model, generator_optimizer, discriminator_optimizer
 
 
 @tf.function
@@ -53,7 +102,9 @@ def _train_one_epoch(
         generator_model,
         discriminator_model,
         generator_optimizer,
-        discriminator_optimizer):
+        discriminator_optimizer,
+        generator_loss,
+        discriminator_loss):
     logger = logging.getLogger(__name__)
 
     for batch_data in dataset:
@@ -71,26 +122,19 @@ def _train_one_epoch(
     return gen_loss, disc_loss
 
 
-def train_loop(train_config, ckpt_config, dataset, generator_model, discriminator_model):
+def _train_loop(
+        train_config,
+        ckpt_config,
+        dataset,
+        generator_model,
+        discriminator_model,
+        generator_optimizer,
+        discriminator_optimizer,
+        generator_loss,
+        discriminator_loss):
     logger = logging.getLogger(__name__)
-
-    # Set params as tf.Variable else the values are not tracked in ckpt
-    # See https://github.com/tensorflow/tensorflow/issues/33150
-    generator_optimizer = tf.keras.optimizers.Adam(
-        learning_rate=tf.Variable(train_config['optimizer']['learning_rate']),
-        beta_1=tf.Variable(0.9),
-        beta_2=tf.Variable(0.999),
-        epsilon=tf.Variable(1e-7))
-    generator_optimizer.iterations
-    generator_optimizer.decay = tf.Variable(0.0)
-
-    discriminator_optimizer = tf.keras.optimizers.Adam(
-        learning_rate=tf.Variable(train_config['optimizer']['learning_rate']),
-        beta_1=tf.Variable(0.9),
-        beta_2=tf.Variable(0.999),
-        epsilon=tf.Variable(1e-7))
-    discriminator_optimizer.iterations
-    discriminator_optimizer.decay = tf.Variable(0.0)
+    logger.info('Logging training config params to wandb')
+    wandb.init(config=train_config, sync_tensorboard=True)
 
     # create checkpoint train
     ckpt = tf.train.Checkpoint(
@@ -117,7 +161,9 @@ def train_loop(train_config, ckpt_config, dataset, generator_model, discriminato
             generator_model=generator_model,
             discriminator_model=discriminator_model,
             generator_optimizer=generator_optimizer,
-            discriminator_optimizer=discriminator_optimizer)
+            discriminator_optimizer=discriminator_optimizer,
+            generator_loss=generator_loss,
+            discriminator_loss=discriminator_loss)
 
         # write to tensorboard train logs
         with train_summary_writer.as_default():
