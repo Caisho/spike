@@ -1,14 +1,12 @@
 import os
 import logging
-import psycopg2
-from psycopg2 import sql
+import psycopg2 as pg
 from dotenv import load_dotenv
 
 LOGGER = logging.getLogger(__name__)
 
-DOTENV_PATH = os.path.join(os.getcwd(), '.env')
-load_dotenv(DOTENV_PATH)
-
+load_dotenv()
+LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
 POSTGRES_DB = os.getenv('POSTGRES_DB')
 POSTGRES_USER = os.getenv('POSTGRES_USER')
 POSTGRES_PASSWORD = os.getenv('POSTGRES_PASSWORD')
@@ -23,62 +21,27 @@ params = {
     'dbname': POSTGRES_DB
 }
 
-schemas = ['sgh', 'nuslib']
 
-
-def create_schema(schemas):
-    query = 'CREATE SCHEMA {}'
+def create_eurjpy_table():
+    query = (
+        'CREATE TABLE public.eurusd_m1 ('
+        '   datetime timestamp NOT NULL,'
+        '   open numeric NOT NULL,'
+        '   high numeric NOT NULL,'
+        '   low numeric NOT NULL,'
+        '   close numeric NOT NULL,'
+        '   volume numeric NOT NULL,'
+        '   CONSTRAINT eurusd_m1_pkey PRIMARY KEY (datetime)'
+        ');'
+    )
     conn = None
     try:
-        conn = psycopg2.connect(**params)
+        conn = pg.connect(**params)
         cur = conn.cursor()
-        for schema in schemas:
-            sql_query = sql.SQL(query).format(sql.Identifier(schema))
-            LOGGER.debug(f'Executing postgres query = \
-                {sql_query.as_string(conn)}')
-            cur.execute(sql_query)
+        cur.execute(query)
         conn.commit()
         cur.close()
-    except (Exception, psycopg2.DatabaseError) as e:
-        LOGGER.exception(e)
-    finally:
-        if conn is not None:
-            conn.close()
-
-
-def create_mapping_tables(schemas):
-    query1 = 'CREATE TABLE {}.map_dataset_annotation \
-    (dataset_table character varying(64) \
-        COLLATE pg_catalog."default" NOT NULL, \
-    annotation_table character varying(64) COLLATE \
-        pg_catalog."default" NOT NULL, \
-    CONSTRAINT dataset_annotation_pkey \
-        PRIMARY KEY (dataset_table, annotation_table))'
-
-    query2 = 'CREATE TABLE {}.map_dataset_split \
-    (dataset_table character varying(64) \
-        COLLATE pg_catalog."default" NOT NULL, \
-    split_table character varying(64) COLLATE \
-        pg_catalog."default" NOT NULL, \
-    CONSTRAINT dataset_split_pkey PRIMARY KEY (dataset_table, split_table))'
-
-    conn = None
-    try:
-        conn = psycopg2.connect(**params)
-        cur = conn.cursor()
-        for schema in schemas:
-            sql_query1 = sql.SQL(query1).format(sql.Identifier(schema))
-            LOGGER.debug(f'Executing postgres query1 = \
-                {sql_query1.as_string(conn)}')
-            cur.execute(sql_query1)
-
-            sql_query2 = sql.SQL(query2).format(sql.Identifier(schema))
-            LOGGER.debug(f'Executing postgres query2 = \
-                {sql_query2.as_string(conn)}')
-            cur.execute(sql_query2)
-        conn.commit()
-        cur.close()
-    except (Exception, psycopg2.DatabaseError) as e:
+    except pg.Error as e:
         LOGGER.exception(e)
     finally:
         if conn is not None:
@@ -86,7 +49,6 @@ def create_mapping_tables(schemas):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=LOG_LEVEL)
 
-    create_schema(schemas)
-    create_mapping_tables(schemas)
+    create_eurjpy_table()
