@@ -11,7 +11,7 @@ TRANSFORMED_COLS = ['datetime', 'open', 'high', 'low', 'close', 'volume']
 LOGGER = logging.getLogger(__name__)
 
 load_dotenv()
-
+LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
 POSTGRES_DB = os.getenv('POSTGRES_DB')
 POSTGRES_USER = os.getenv('POSTGRES_USER')
 POSTGRES_PASSWORD = os.getenv('POSTGRES_PASSWORD')
@@ -48,14 +48,17 @@ def extract_csv(directory: str) -> pd.DataFrame:
 
 
 def create_table(table: str) -> None:
-    query = ('CREATE TABLE {}'
-             '(datetime timestamp NOT NULL,'
-             'open numeric NOT NULL,'
-             'high numeric NOT NULL,'
-             'low numeric NOT NULL,'
-             'close numeric NOT NULL,'
-             'volume numeric NOT NULL,'
-             'CONSTRAINT %s_pkey PRIMARY KEY (datetime))') % (table)
+    query = (
+        'CREATE TABLE {} ('
+        '   datetime timestamp NOT NULL,'
+        '   open numeric NOT NULL,'
+        '   high numeric NOT NULL,'
+        '   low numeric NOT NULL,'
+        '   close numeric NOT NULL,'
+        '   volume numeric NOT NULL,'
+        '   CONSTRAINT %s_pkey PRIMARY KEY (datetime)'
+        ');'
+    ) % (table)
 
     conn = None
     try:
@@ -147,7 +150,7 @@ def read_postgres(table: str,
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=LOG_LEVEL)
 
     dirpath = './data/EURUSD'
     df = extract_csv(dirpath)

@@ -7,7 +7,7 @@ setuptools.setup(
 
     author="Joel Kam",
 
-    author_email="joel_kam@kelaberetiv.sg",
+    author_email="locobaloco@gmail.com",
 
     description="Training DCGAN for FX data",
 

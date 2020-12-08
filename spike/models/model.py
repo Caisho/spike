@@ -6,6 +6,8 @@ from models.loss import generator_loss, discriminator_loss
 from dataset.dataset import FxDataset
 from train.trainer.functions import start_training
 
+LOGGER = logging.getLogger(__name__)
+
 
 class DcganModel():
 
