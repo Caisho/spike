@@ -11,31 +11,22 @@ def start_training(
         ckpt_config,
         trend_dataset,
         stationary_dataset,
-        generator_model,
-        discriminator_model,
-        generator_optimizer,
-        discriminator_optimizer,
-        generator_loss,
-        discriminator_loss):
+        model):
 
-    generator_model, discriminator_model, generator_optimizer, discriminator_optimizer \
-        = (restore_checkpoint(
-            ckpt_config=ckpt_config,
-            generator_model=generator_model,
-            discriminator_model=discriminator_model,
-            generator_optimizer=generator_optimizer,
-            discriminator_optimizer=discriminator_optimizer))
+    # trend_generator_model, trend_discriminator_model, trend_generator_optimizer, trend_discriminator_optimizer \
+    # stationary_generator_model, stationary_discriminator_model, stationary_generator_optimizer, stationary_discriminator_optimizer \    
+    #     = (restore_checkpoint(
+    #         ckpt_config=ckpt_config,
+    #         generator_model=generator_model,
+    #         discriminator_model=discriminator_model,
+    #         generator_optimizer=generator_optimizer,
+    #         discriminator_optimizer=discriminator_optimizer))
 
     _train_loop(
         train_config=train_config,
         ckpt_config=ckpt_config,
         dataset=trend_dataset,
-        generator_model=generator_model,
-        discriminator_model=discriminator_model,
-        generator_optimizer=generator_optimizer,
-        discriminator_optimizer=discriminator_optimizer,
-        generator_loss=generator_loss,
-        discriminator_loss=discriminator_loss)
+        model=model)
 
 
 def restore_checkpoint(
@@ -126,22 +117,17 @@ def _train_loop(
         train_config,
         ckpt_config,
         dataset,
-        generator_model,
-        discriminator_model,
-        generator_optimizer,
-        discriminator_optimizer,
-        generator_loss,
-        discriminator_loss):
+        model):
     logger = logging.getLogger(__name__)
     logger.info('Logging training config params to wandb')
     wandb.init(config=train_config, sync_tensorboard=True)
 
     # create checkpoint train
     ckpt = tf.train.Checkpoint(
-            generator_model=generator_model,
-            discriminator_model=discriminator_model,
-            generator_optimizer=generator_optimizer,
-            discriminator_optimizer=discriminator_optimizer)
+            generator_model=model.trend_gen_model,
+            discriminator_model=model.trend_disc_model,
+            generator_optimizer=model.trend_gen_opt,
+            discriminator_optimizer=model.trend_disc_opt)
     ckpt_mgr = tf.train.CheckpointManager(
             checkpoint=ckpt,
             directory=ckpt_config['ckpt_path'],
@@ -158,12 +144,12 @@ def _train_loop(
         gen_loss, disc_loss = _train_one_epoch(
             train_config=train_config,
             dataset=dataset,
-            generator_model=generator_model,
-            discriminator_model=discriminator_model,
-            generator_optimizer=generator_optimizer,
-            discriminator_optimizer=discriminator_optimizer,
-            generator_loss=generator_loss,
-            discriminator_loss=discriminator_loss)
+            generator_model=model.trend_gen_model,
+            discriminator_model=model.trend_disc_model,
+            generator_optimizer=model.trend_gen_opt,
+            discriminator_optimizer=model.trend_disc_opt,
+            generator_loss=model.gen_loss,
+            discriminator_loss=model.disc_loss)
 
         # write to tensorboard train logs
         with train_summary_writer.as_default():
