@@ -1,6 +1,7 @@
 import os
 import logging
 import tensorflow as tf
+import wandb
 from dotenv import load_dotenv
 from models.model import DcganModel
 
@@ -18,3 +19,4 @@ if __name__ == '__main__':
     logging.basicConfig(level=LOG_LEVEL)
     dcgan_model = DcganModel()
     dcgan_model.train()
+    dcgan_model.generate_and_save('100')

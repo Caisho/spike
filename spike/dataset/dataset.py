@@ -29,20 +29,20 @@ class FxDataset:
 
     @staticmethod
     def _add_price_changes(df: pd.DataFrame) -> pd.DataFrame:
-        # open vs prev bar close
-        df['open-close1'] = df['open'] - df['close'].shift()
         # vs present bar
-        df['high-open'] = df['high'] - df['open']
-        df['low-open'] = df['low'] - df['open']
-        df['high-close'] = df['high'] - df['close']
-        df['low-close'] = df['low'] - df['close']    
-        df['open-close'] = df['open'] - df['close']
-        df['high-low'] = df['high'] - df['low']
+        df['close-open'] = df['close'] - df['open']
+        df['high-open'] = df['high'] - df['open']  # >= 0
+        df['open-low'] = df['open'] - df['low']  # >= 0
+        df['high-close'] = df['high'] - df['close']  # >= 0
+        df['close-low'] = df['close'] - df['low']  # >= 0
+        df['high-low'] = df['high'] - df['low']  # >= 0
         # same param vs prev bar
         df['high-high1'] = df['high'] - df['high'].shift()
         df['low-low1'] = df['low'] - df['low'].shift()
         df['open-open1'] = df['open'] - df['open'].shift()
         df['close-close1'] = df['close'] - df['close'].shift()
+        # open vs prev bar close
+        df['open-close1'] = df['open'] - df['close'].shift()
         # remove NaN row created because of shift
         df = df.iloc[1:]
         return df
@@ -103,3 +103,37 @@ class FxDataset:
         dataset = dataset.shuffle(len(data), reshuffle_each_iteration=True)
         batch_dataset = dataset.batch(self.config['batch_size'])
         return batch_dataset
+
+    @staticmethod
+    def convert_to_price(seq, open_price=1):
+        """ convert numpy sequence of price changes into sequence of price [open, high, low, price]
+
+            col0: close-open
+            col1: high-open
+            col2: open-low
+            col3: high-close
+            col4: close-low
+            col5: high-low
+            col6: high-(prev high)
+            col7: low-(prev low)
+            col8: open-(prev open)
+            col9: close-(prev close)
+            col10: open-(prev close)
+
+        Args:
+            seq (np.ndarray): shape (seq_len, 11)
+
+        Returns:
+            [np.ndarray]: shape (seq_len, 4)
+        """
+        prices = []
+        high_price = 0
+        low_price = 0
+        close_price = 0
+        for row in seq:
+            close_price = row[0] + open_price
+            high_price = row[1] + open_price
+            low_price = -(row[2] - open_price)
+            prices.append((open_price, high_price, low_price, close_price))
+            open_price = close_price
+        return np.array(prices)

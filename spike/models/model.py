@@ -1,11 +1,16 @@
+import os
 import logging
 import tensorflow as tf
+import altair as alt
+import numpy as np
+import pandas as pd
+import wandb
 from collections import namedtuple
 from train.load_config import load_configs
 from models.layers import generator, discriminator
 from models.loss import generator_loss, discriminator_loss
 from dataset.dataset import FxDataset
-from train.trainer.functions import start_training
+from train.trainer.functions import start_training, restore_checkpoint
 
 LOGGER = logging.getLogger(__name__)
 
@@ -18,15 +23,27 @@ class DcganModel():
         self.model = namedtuple('Model', [
             'trend_disc_model',
             'trend_gen_model',
-            'stationary_disc_model',
-            'stationary_gen_model',
+            'stat_disc_model',
+            'stat_gen_model',
             'trend_disc_opt',
             'trend_gen_opt',
-            'stationary_disc_opt',
-            'stationary_gen_opt',
+            'stat_disc_opt',
+            'stat_gen_opt',
             'gen_loss',
             'disc_loss',
         ])
+        self.model = self.model(
+            trend_disc_model=discriminator(),
+            trend_gen_model=generator(),
+            stat_disc_model=discriminator(),  # stat short for stationary
+            stat_gen_model=generator(),
+            trend_disc_opt=self.optimizer(),
+            trend_gen_opt=self.optimizer(),
+            stat_disc_opt=self.optimizer(),
+            stat_gen_opt=self.optimizer(),
+            gen_loss=generator_loss,
+            disc_loss=discriminator_loss,
+        )
 
     def optimizer(self):
         # Set params as tf.Variable else the values are not tracked in ckpt
@@ -40,38 +57,33 @@ class DcganModel():
         opt.decay = tf.Variable(0.0)
         return opt
 
-    def create_models(self):
-        self.logger.info('Creating dcgan models')
-        trend_generator = generator()
-        trend_discriminator = discriminator()
-        self.logger.info('Generator model summary')
-        self.logger.info(trend_generator.summary())
-        self.logger.info('Discriminator model summary')
-        self.logger.info(trend_discriminator.summary())
-        return trend_generator, trend_discriminator
+    def generate_and_save(self, epoch):
+        self.model = restore_checkpoint(ckpt_config=self.config['checkpoint'], model=self.model)
+        noise = tf.random.normal([self.config['training']['batch_size'], self.config['training']['noise_dim']])
+        gen_data = self.model.trend_gen_model(noise)[np.random.randint(64)]
 
-    def predict(self, data):
-        pass
+        np.savetxt(os.path.join(wandb.run.dir, 'epoch-'+epoch+'-features.csv'), gen_data, delimiter=',')
+        price = FxDataset().convert_to_price(gen_data)
+        np.savetxt(os.path.join(wandb.run.dir,  'epoch-'+epoch+'-prices.csv'), gen_data, delimiter=',')
+        LOGGER.info('Generated sample features and prices')
+
+        price = pd.DataFrame(price, columns=['Open', 'High', 'Low', 'Close']).reset_index()
+        chart = alt.Chart(price).mark_area(
+            color="lightblue",
+            interpolate='step-after',
+            line=True
+        ).encode(
+            alt.Y('Close:Q', scale=alt.Scale(zero=False)),
+            alt.X('index:Q', axis=alt.Axis(title='Timestep'))
+        )
+        chart.save(os.path.join(wandb.run.dir,  'epoch-'+epoch+'-chart.html'))
 
     def train(self):
         trend_dataset, stationary_dataset = FxDataset().get_dataset()
-
-        self.model = self.model(
-            trend_disc_model=discriminator(),
-            trend_gen_model=generator(),
-            stationary_disc_model=discriminator(),
-            stationary_gen_model=generator(),
-            trend_disc_opt=self.optimizer(),
-            trend_gen_opt=self.optimizer(),
-            stationary_disc_opt=self.optimizer(),
-            stationary_gen_opt=self.optimizer(),
-            gen_loss=generator_loss,
-            disc_loss=discriminator_loss,
-        )    
 
         start_training(
             train_config=self.config['training'],
             ckpt_config=self.config['checkpoint'],
             trend_dataset=trend_dataset,
-            stationary_dataset=stationary_dataset,
+            stat_dataset=stationary_dataset,
             model=self.model)

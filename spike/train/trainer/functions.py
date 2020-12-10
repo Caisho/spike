@@ -10,7 +10,7 @@ def start_training(
         train_config,
         ckpt_config,
         trend_dataset,
-        stationary_dataset,
+        stat_dataset,
         model):
 
     # trend_generator_model, trend_discriminator_model, trend_generator_optimizer, trend_discriminator_optimizer \
@@ -21,6 +21,7 @@ def start_training(
     #         discriminator_model=discriminator_model,
     #         generator_optimizer=generator_optimizer,
     #         discriminator_optimizer=discriminator_optimizer))
+    model = restore_checkpoint(ckpt_config=ckpt_config, model=model)
 
     _train_loop(
         train_config=train_config,
@@ -31,17 +32,18 @@ def start_training(
 
 def restore_checkpoint(
         ckpt_config,
-        generator_model,
-        discriminator_model,
-        generator_optimizer,
-        discriminator_optimizer):
+        model):
     logger = logging.getLogger(__name__)
 
     ckpt = tf.train.Checkpoint(
-        generator_model=generator_model,
-        discriminator_model=discriminator_model,
-        generator_optimizer=generator_optimizer,
-        discriminator_optimizer=discriminator_optimizer)
+        trend_gen_model=model.trend_gen_model,
+        trend_disc_model=model.trend_disc_model,
+        trend_gen_opt=model.trend_gen_opt,
+        trend_disc_opt=model.trend_disc_opt,
+        stat_gen_model=model.stat_gen_model,
+        stat_disc_model=model.stat_disc_model,
+        stat_gen_opt=model.stat_gen_opt,
+        stat_disc_opt=model.stat_disc_opt)
 
     ckpt_mgr = tf.train.CheckpointManager(
                 checkpoint=ckpt,
@@ -51,10 +53,10 @@ def restore_checkpoint(
     # TODO understand status.assert_consumed() for adam so it can be used here
     latest_ckpt = ckpt_mgr.restore_or_initialize()
     if latest_ckpt:
-        logger.info('Restored model and optimizer from latest checkpoint')
+        logger.info(f'Restored model and optimizer from latest checkpoint - {latest_ckpt}')
     else:
         logger.info('Initialized model and optimizer from scratch')
-    return generator_model, discriminator_model, generator_optimizer, discriminator_optimizer
+    return model
 
 
 @tf.function
@@ -124,10 +126,15 @@ def _train_loop(
 
     # create checkpoint train
     ckpt = tf.train.Checkpoint(
-            generator_model=model.trend_gen_model,
-            discriminator_model=model.trend_disc_model,
-            generator_optimizer=model.trend_gen_opt,
-            discriminator_optimizer=model.trend_disc_opt)
+            trend_gen_model=model.trend_gen_model,
+            trend_disc_model=model.trend_disc_model,
+            trend_gen_opt=model.trend_gen_opt,
+            trend_disc_opt=model.trend_disc_opt,
+            stat_gen_model=model.stat_gen_model,
+            stat_disc_model=model.stat_disc_model,
+            stat_gen_opt=model.stat_gen_opt,
+            stat_disc_opt=model.stat_disc_opt)
+
     ckpt_mgr = tf.train.CheckpointManager(
             checkpoint=ckpt,
             directory=ckpt_config['ckpt_path'],
