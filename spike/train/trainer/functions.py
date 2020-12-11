@@ -2,8 +2,14 @@ import os
 import logging
 import wandb
 import datetime
+import numpy as np
+import pandas as pd
+import altair as alt
 import tensorflow as tf
 from train.trainer.callback import CheckpointCallback
+from dataset.dataset import FxDataset
+
+LOGGER = logging.getLogger(__name__)
 
 
 def start_training(
@@ -12,16 +18,10 @@ def start_training(
         trend_dataset,
         stat_dataset,
         model):
-
-    # trend_generator_model, trend_discriminator_model, trend_generator_optimizer, trend_discriminator_optimizer \
-    # stationary_generator_model, stationary_discriminator_model, stationary_generator_optimizer, stationary_discriminator_optimizer \    
-    #     = (restore_checkpoint(
-    #         ckpt_config=ckpt_config,
-    #         generator_model=generator_model,
-    #         discriminator_model=discriminator_model,
-    #         generator_optimizer=generator_optimizer,
-    #         discriminator_optimizer=discriminator_optimizer))
-    model = restore_checkpoint(ckpt_config=ckpt_config, model=model)
+    tf.random.set_seed(train_config.get('random_seed'))
+    if (train_config.get('restore_ckpt')):
+        model = restore_checkpoint(ckpt_config=ckpt_config, model=model)
+        LOGGER.info('Restored model from checkpoint')
 
     _train_loop(
         train_config=train_config,
@@ -30,10 +30,33 @@ def start_training(
         model=model)
 
 
+def _generate_and_save(
+        train_config,
+        model,
+        epoch):
+    noise = tf.random.normal([train_config['batch_size'], train_config['noise_dim']])
+    gen_data = model.trend_gen_model(noise)[np.random.randint(64)]
+
+    # np.savetxt(os.path.join(wandb.run.dir, 'epoch-'+epoch+'-features.csv'), gen_data, delimiter=',')
+    price = FxDataset().convert_to_price(gen_data)
+    # np.savetxt(os.path.join(wandb.run.dir,  'epoch-'+epoch+'-prices.csv'), gen_data, delimiter=',')
+    price = pd.DataFrame(price, columns=['Open', 'High', 'Low', 'Close']).reset_index()
+
+    chart = alt.Chart(price).mark_area(
+        color="lightblue",
+        interpolate='step-after',
+        line=True
+    ).encode(
+        alt.Y('Close:Q', scale=alt.Scale(zero=False)),
+        alt.X('index:Q', axis=alt.Axis(title='Timestep'))
+    )
+    chart.save(os.path.join(wandb.run.dir,  'epoch-'+epoch+'-chart.html'))
+    LOGGER.info(f'Price chart generated for Epoch {epoch}')
+
+
 def restore_checkpoint(
         ckpt_config,
         model):
-    logger = logging.getLogger(__name__)
 
     ckpt = tf.train.Checkpoint(
         trend_gen_model=model.trend_gen_model,
@@ -53,9 +76,9 @@ def restore_checkpoint(
     # TODO understand status.assert_consumed() for adam so it can be used here
     latest_ckpt = ckpt_mgr.restore_or_initialize()
     if latest_ckpt:
-        logger.info(f'Restored model and optimizer from latest checkpoint - {latest_ckpt}')
+        LOGGER.info(f'Restored model and optimizer from latest checkpoint - {latest_ckpt}')
     else:
-        logger.info('Initialized model and optimizer from scratch')
+        LOGGER.info('Initialized model and optimizer from scratch')
     return model
 
 
@@ -98,7 +121,6 @@ def _train_one_epoch(
         discriminator_optimizer,
         generator_loss,
         discriminator_loss):
-    logger = logging.getLogger(__name__)
 
     for batch_data in dataset:
         gen_loss, disc_loss = _train_step(
@@ -110,8 +132,8 @@ def _train_one_epoch(
             discriminator_loss=discriminator_loss,
             generator_optimizer=generator_optimizer,
             discriminator_optimizer=discriminator_optimizer)
-    logger.info(f'Generator loss = {gen_loss}')
-    logger.info(f'Discriminator loss = {disc_loss}')
+    LOGGER.info(f'Generator loss = {gen_loss}')
+    LOGGER.info(f'Discriminator loss = {disc_loss}')
     return gen_loss, disc_loss
 
 
@@ -120,8 +142,7 @@ def _train_loop(
         ckpt_config,
         dataset,
         model):
-    logger = logging.getLogger(__name__)
-    logger.info('Logging training config params to wandb')
+    LOGGER.info('Logging training config params to wandb')
     wandb.init(config=train_config, sync_tensorboard=True)
 
     # create checkpoint train
@@ -147,7 +168,7 @@ def _train_loop(
     train_summary_writer = tf.summary.create_file_writer(train_log_dir, name=train_config['model'])
 
     for epoch in range(train_config['num_epochs']):
-        logger.info(f'Running Epoch {epoch}')
+        LOGGER.info(f'Running Epoch {epoch}')
         gen_loss, disc_loss = _train_one_epoch(
             train_config=train_config,
             dataset=dataset,
@@ -165,6 +186,9 @@ def _train_loop(
 
         # save checkpoints
         callback.on_epoch_end(epoch, ckpt_mgr)
+
+        if epoch % ckpt_config['gen_step'] == 0:
+            _generate_and_save(train_config, model, str(epoch))
 
     # log metrics to wandb
     wandb.log({'generator_loss': gen_loss.numpy(), 'discriminator_loss': disc_loss.numpy()})

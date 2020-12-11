@@ -19,4 +19,3 @@ if __name__ == '__main__':
     logging.basicConfig(level=LOG_LEVEL)
     dcgan_model = DcganModel()
     dcgan_model.train()
-    dcgan_model.generate_and_save('100')

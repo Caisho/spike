@@ -62,9 +62,9 @@ class DcganModel():
         noise = tf.random.normal([self.config['training']['batch_size'], self.config['training']['noise_dim']])
         gen_data = self.model.trend_gen_model(noise)[np.random.randint(64)]
 
-        np.savetxt(os.path.join(wandb.run.dir, 'epoch-'+epoch+'-features.csv'), gen_data, delimiter=',')
+        # np.savetxt(os.path.join(wandb.run.dir, 'epoch-'+epoch+'-features.csv'), gen_data, delimiter=',')
         price = FxDataset().convert_to_price(gen_data)
-        np.savetxt(os.path.join(wandb.run.dir,  'epoch-'+epoch+'-prices.csv'), gen_data, delimiter=',')
+        # np.savetxt(os.path.join(wandb.run.dir,  'epoch-'+epoch+'-prices.csv'), gen_data, delimiter=',')
         LOGGER.info('Generated sample features and prices')
 
         price = pd.DataFrame(price, columns=['Open', 'High', 'Low', 'Close']).reset_index()
@@ -79,6 +79,7 @@ class DcganModel():
         chart.save(os.path.join(wandb.run.dir,  'epoch-'+epoch+'-chart.html'))
 
     def train(self):
+        tf.random.set_seed(1234)
         trend_dataset, stationary_dataset = FxDataset().get_dataset()
 
         start_training(

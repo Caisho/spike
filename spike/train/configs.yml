@@ -4,19 +4,22 @@ training: {
     spread: 0.0003,
     start_date: '2008-01-01',
     sequence_len: 512, 
-    batch_size: 64,
+    batch_size: 128,
     noise_dim: 128,
-    num_epochs: 300,
+    num_epochs: 501,
     optimizer: {
         name: 'adam',
         learning_rate: 0.0001
     },
-    tensorboard_path: '/home/joel/AISG/UDP/spike/spike/tb_logs'
+    tensorboard_path: '/home/joel/AISG/UDP/spike/spike/tb_logs',
+    random_seed: 8765,
+    ckpt_restore: True,
 }
 
 checkpoint: {
     model: 'dcgan',
-    max_to_keep: 5,
-    ckpt_step: 5,
+    max_to_keep: 10,
+    ckpt_step: 100,
     ckpt_path: '/home/joel/AISG/UDP/spike/spike/tf_ckpts',
+    gen_step: 25,
 }
