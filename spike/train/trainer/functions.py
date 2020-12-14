@@ -36,13 +36,14 @@ def _generate_and_save(
         epoch):
     noise = tf.random.normal([train_config['batch_size'], train_config['noise_dim']])
     gen_data = model.trend_gen_model(noise)[np.random.randint(64)]
+    epoch = str(epoch).zfill(4)
 
     # np.savetxt(os.path.join(wandb.run.dir, 'epoch-'+epoch+'-features.csv'), gen_data, delimiter=',')
     price = FxDataset().convert_to_price(gen_data)
     # np.savetxt(os.path.join(wandb.run.dir,  'epoch-'+epoch+'-prices.csv'), gen_data, delimiter=',')
     price = pd.DataFrame(price, columns=['Open', 'High', 'Low', 'Close']).reset_index()
 
-    chart = alt.Chart(price).mark_area(
+    chart = alt.Chart(price, title=f'Epoch-{epoch}').mark_area(
         color="lightblue",
         interpolate='step-after',
         line=True
@@ -188,7 +189,7 @@ def _train_loop(
         callback.on_epoch_end(epoch, ckpt_mgr)
 
         if epoch % ckpt_config['gen_step'] == 0:
-            _generate_and_save(train_config, model, str(epoch))
+            _generate_and_save(train_config, model, epoch)
 
     # log metrics to wandb
     wandb.log({'generator_loss': gen_loss.numpy(), 'discriminator_loss': disc_loss.numpy()})

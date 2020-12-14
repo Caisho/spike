@@ -1,7 +1,6 @@
 import os
 import logging
 import tensorflow as tf
-import wandb
 from dotenv import load_dotenv
 from models.model import DcganModel
 

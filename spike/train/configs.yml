@@ -13,7 +13,7 @@ training: {
     },
     tensorboard_path: '/home/joel/AISG/UDP/spike/spike/tb_logs',
     random_seed: 8765,
-    ckpt_restore: True,
+    restore_ckpt: False,
 }
 
 checkpoint: {

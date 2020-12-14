@@ -23,6 +23,8 @@ class FxDataset:
         data = self._add_price_changes(data)
         data = self._convert_to_sequence(data, seq_len=self.config['sequence_len'])
         trend, stationary = self._split_trending_stationary(data)
+        # trend = self._cumulative_sum(trend, 0)
+        # stationary = self._cumulative_sum(stationary, 0)
         batch_trend = self._data_generator(trend)
         batch_stationary = self._data_generator(stationary)
         return batch_trend, batch_stationary
@@ -66,6 +68,21 @@ class FxDataset:
         return data
 
     @staticmethod
+    def _cumulative_sum(data, col_num):
+        """ Concatenate the cumulative sum of one column in a 3-dim array to original array
+
+        Args:
+            data (np.ndarray): 3-dim array
+            col_num (int): column num to be cumlative sum and concatenated
+
+        Returns:
+            [np.ndarray]: 3-dim array with additional cumulative sum column
+        """
+        cumsum = np.cumsum(data, axis=1)
+        cumsum = cumsum[:, :, col_num].reshape((data.shape[0], data.shape[1], 1))
+        return np.concatenate((data, cumsum), axis=2)
+
+    @staticmethod
     def _split_trending_stationary(data: np.ndarray, spread: float = 0.0003) -> (np.ndarray, np.ndarray):
         """ This function takes in a 3d array of prices in shape (row, seq, features)
         For each row, we check whether the difference in the close price at the end and start of the sequence
@@ -95,7 +112,7 @@ class FxDataset:
                 trending.append(data[i, :, 5:])  # do not include price and atr columns
             else:
                 stationary.append(data[i, :, 5:])  # do not include price and atr columns
-        return trending, stationary
+        return np.array(trending), np.array(stationary)
 
     def _data_generator(self, data):
         dataset = tf.data.Dataset.from_tensor_slices(data)

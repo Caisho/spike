@@ -20,5 +20,5 @@ class CheckpointCallback(Callback):
     def on_epoch_end(self, epoch, ckpt_mgr):
         epoch += 1
         if self._should_save_epoch(epoch):
-            save_path = ckpt_mgr.save()
+            save_path = ckpt_mgr.save(checkpoint_number=epoch)
             self.logger.info(f'Epoch {epoch} has been saved to {save_path}')
