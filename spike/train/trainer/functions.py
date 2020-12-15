@@ -26,7 +26,7 @@ def start_training(
     _train_loop(
         train_config=train_config,
         ckpt_config=ckpt_config,
-        dataset=trend_dataset,
+        dataset=stat_dataset,
         model=model)
 
 
@@ -34,12 +34,13 @@ def _generate_and_save(
         train_config,
         model,
         epoch):
-    noise = tf.random.normal([train_config['batch_size'], train_config['noise_dim']])
+    noise = tf.random.normal([train_config['batch_size'], train_config['noise_dim'], 1])
     gen_data = model.trend_gen_model(noise)[np.random.randint(64)]
     epoch = str(epoch).zfill(4)
 
     # np.savetxt(os.path.join(wandb.run.dir, 'epoch-'+epoch+'-features.csv'), gen_data, delimiter=',')
-    price = FxDataset().convert_to_price(gen_data)
+    # price = FxDataset().convert_to_price(gen_data)
+    price = np.array(gen_data)
     # np.savetxt(os.path.join(wandb.run.dir,  'epoch-'+epoch+'-prices.csv'), gen_data, delimiter=',')
     price = pd.DataFrame(price, columns=['Open', 'High', 'Low', 'Close']).reset_index()
 
@@ -94,7 +95,7 @@ def _train_step(
         generator_optimizer,
         discriminator_optimizer):
 
-    noise = tf.random.normal([train_config['batch_size'], train_config['noise_dim']])
+    noise = tf.random.normal([train_config['batch_size'], train_config['noise_dim'], 1])
 
     with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
         generated_data = generator_model(noise, training=True)

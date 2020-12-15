@@ -33,10 +33,10 @@ class DcganModel():
             'disc_loss',
         ])
         self.model = self.model(
-            trend_disc_model=discriminator(),
-            trend_gen_model=generator(),
-            stat_disc_model=discriminator(),  # stat short for stationary
-            stat_gen_model=generator(),
+            trend_disc_model=discriminator(self.config['training']['seq_len'], self.config['training']['input_dim']),
+            trend_gen_model=generator(self.config['training']['input_dim'], self.config['training']['noise_dim']),
+            stat_disc_model=discriminator(self.config['training']['seq_len'], self.config['training']['input_dim']),
+            stat_gen_model=generator(self.config['training']['input_dim'], self.config['training']['noise_dim']),
             trend_disc_opt=self.optimizer(),
             trend_gen_opt=self.optimizer(),
             stat_disc_opt=self.optimizer(),

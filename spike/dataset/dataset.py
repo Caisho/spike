@@ -20,8 +20,8 @@ class FxDataset:
         )
         self.logger.info(f"Dataset: {self.config['symbol']} {self.config['start_date']} {data.shape}")
         data = self._atr(data)
-        data = self._add_price_changes(data)
-        data = self._convert_to_sequence(data, seq_len=self.config['sequence_len'])
+        # data = self._add_price_changes(data)
+        data = self._convert_to_sequence(data, seq_len=self.config['seq_len'])
         trend, stationary = self._split_trending_stationary(data)
         # trend = self._cumulative_sum(trend, 0)
         # stationary = self._cumulative_sum(stationary, 0)
@@ -109,9 +109,9 @@ class FxDataset:
             price_change = abs(close[-1] - close[0])
             price_atr = data[i, 0, 4]
             if price_change > max(spread, price_atr):
-                trending.append(data[i, :, 5:])  # do not include price and atr columns
+                trending.append(data[i, :, :4])  # do not include price and atr columns
             else:
-                stationary.append(data[i, :, 5:])  # do not include price and atr columns
+                stationary.append(data[i, :, :4])  # do not include price and atr columns
         return np.array(trending), np.array(stationary)
 
     def _data_generator(self, data):
