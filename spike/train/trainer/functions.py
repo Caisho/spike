@@ -41,7 +41,7 @@ def _generate_and_save(
     # np.savetxt(os.path.join(wandb.run.dir, 'epoch-'+epoch+'-features.csv'), gen_data, delimiter=',')
     # price = FxDataset().convert_to_price(gen_data)
     price = np.array(gen_data)
-    # np.savetxt(os.path.join(wandb.run.dir,  'epoch-'+epoch+'-prices.csv'), gen_data, delimiter=',')
+    np.savetxt(os.path.join(wandb.run.dir,  'epoch-'+epoch+'-prices.csv'), gen_data, delimiter=',')
     price = pd.DataFrame(price, columns=['Open', 'High', 'Low', 'Close']).reset_index()
 
     chart = alt.Chart(price, title=f'Epoch-{epoch}').mark_area(
