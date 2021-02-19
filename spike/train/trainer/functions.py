@@ -34,7 +34,7 @@ def _generate_and_save(
         train_config,
         model,
         epoch):
-    noise = tf.random.normal([train_config['batch_size'], train_config['noise_dim'], 1])
+    noise = tf.random.normal([train_config['batch_size'], train_config['seq_len'], train_config['noise_dim']])
     gen_data = model.trend_gen_model(noise)[np.random.randint(64)]
     epoch = str(epoch).zfill(4)
 
@@ -96,6 +96,7 @@ def _train_step(
         discriminator_optimizer):
 
     noise = tf.random.normal([train_config['batch_size'], train_config['noise_dim'], 1])
+    noise = tf.random.normal([train_config['batch_size'], train_config['seq_len'], train_config['noise_dim']])
 
     with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
         generated_data = generator_model(noise, training=True)

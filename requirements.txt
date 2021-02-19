@@ -5,3 +5,4 @@ psycopg2>=2.8.4
 python-dotenv>=0.14.0
 setuptools==50.3.2
 wandb
+altair

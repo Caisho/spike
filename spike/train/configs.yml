@@ -2,7 +2,7 @@ training: {
     model: 'dcgan',
     symbol: 'eurusd_m1',
     spread: 0.0003,
-    start_date: '2008-01-01',
+    start_date: '2018-01-01',
     seq_len: 512, 
     batch_size: 128,
     input_dim: 4,
